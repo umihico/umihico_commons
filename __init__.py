@@ -1,6 +1,6 @@
 try:
-    from csv_wrapper import *
-    from chrome_wrapper import *
+    import csv_wrapper
+    import chrome_wrapper
 except (Exception, ) as e:
-    from .csv_wrapper import *
-    from .chrome_wrapper import *
+    from . import csv_wrapper
+    from . import chrome_wrapper
