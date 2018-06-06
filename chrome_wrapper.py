@@ -192,8 +192,9 @@ class Chrome(webdriver.Chrome):
             'body').send_keys(Keys.ALT, 'D', Keys.ENTER)
 
     def close_tab(self):
-        self.find_element_by_tag_name(
-            'body').send_keys(Keys.CONTROL + 'w')
+        self.close()
+        # self.find_element_by_tag_name(
+        #     'body').send_keys(Keys.CONTROL + 'w') dosen't work
 
     def switch_tab(self, index=0):
         self.switch_to.window(self.window_handles[index])
