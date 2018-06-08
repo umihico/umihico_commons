@@ -1,7 +1,9 @@
 import csv
-import xlsxwriter
-import xlrd
 from time import sleep
+try:
+    from xlsx_wrapper import to_xlsx, load_xlsx
+except (Exception, ) as e:
+    from .xlsx_wrapper import to_xlsx, load_xlsx
 
 
 def _open(path, mode):
@@ -27,31 +29,15 @@ def load_csv(path):
 
 
 def xlsx_to_list_of_list(filename):
-    xl_workbook = xlrd.open_workbook(filename)
-    # sheet_names = xl_workbook.sheet_names()
-    # print('Sheet Names', sheet_names)
-    # xl_sheet = xl_workbook.sheet_by_name(sheet_names[0])
-    xl_sheet = xl_workbook.sheet_by_index(0)
-    # print ('Sheet name: %s' % xl_sheet.name)
-    row = xl_sheet.row(0)  # 1st row
-    nrows = xl_sheet.nrows
-    ncols = xl_sheet.ncols
-    list_of_list = []
-    for row_index in range(0, nrows):
-        list_ = []
-        for col_index in range(0, ncols):
-            cell_str = str(xl_sheet.cell(row_index, col_index).value)
-            list_.append(cell_str)
-        list_of_list.append(list_)
-    return list_of_list
+    print("using csv_wrapper.xlsx_to_list_of_list")
+    print("new ver is xlsx_wrapper.load_xlsx")
+    return load_xlsx(filename)
 
 
 def xlsx_from_list_of_list(filename, list_of_list):
-    workbook = xlsxwriter.Workbook(filename)
-    worksheet = workbook.add_worksheet()
-    for row_index, row in enumerate(list_of_list):
-        for col_index, cell in enumerate(row):
-            worksheet.write(row_index, col_index, cell)
+    print("using csv_wrapper.xlsx_from_list_of_list")
+    print("new ver is xlsx_wrapper.to_xlsx")
+    return to_xlsx(filename, list_of_list)
 
 
 def convert_list_of_dicts_to_list_of_list(list_of_dict, missing_value='__NoValue__'):
