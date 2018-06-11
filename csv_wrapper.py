@@ -21,9 +21,10 @@ def save_csv(path, list_of_list):
         w.writerows(list_of_list)
 
 
-def load_csv(path):
+def load_csv(path, delimiter=","):
     with _open(path, mode='r') as f:
-        csv_ = csv.reader(f)
+        delimiter = '\t'
+        csv_ = csv.reader(f, delimiter=delimiter)
         rows = list(csv_)
     return rows
 
