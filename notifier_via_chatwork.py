@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import requests
 import pprint
-from passpacker import passwords
+from passpacker import passwords as public_passwords
 
 
 class ChatworkApi():
-    def __init__(self):
+    def __init__(self, passwords=None):
+        passwords = passwords or public_passwords
         self.api_key = passwords['chatwork_api_key']
         self.chat_id = passwords['chatwork_chatroom_number']
 
