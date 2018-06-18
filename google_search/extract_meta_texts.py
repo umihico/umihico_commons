@@ -1,12 +1,24 @@
-from chrome_wrapper import Chrome, Keys
-import csv_wrapper
+from umihico_commons.chrome_wrapper import Chrome, Keys
+from umihico_commons import csv_wrapper
 import sys
 from traceback import format_exc
 from time import sleep
 import os
 
 
-def _scroll_google_search_to_the_bottom(c):
+def get_raw_meta_texts(url):
+    print('running Chrome...')
+    c = Chrome()
+    c.get(url)
+    _scroll_to_the_bottom_google_image_search(c)
+    print('exacting by xpath...')
+    elements = c.xpath_lxml('//*[@class = "rg_meta notranslate"]')
+    raw_meta_texts = list(map(lambda x: x.text_content(), elements))
+    c.quit()
+    return raw_meta_texts
+
+
+def _scroll_to_the_bottom_google_image_search(c):
     last_height = 0
     scrolling_cnt = 0
     while True:
@@ -28,47 +40,13 @@ def _scroll_google_search_to_the_bottom(c):
         last_height = new_height
 
 
-def _gen_url(i):
-    list_of_list = csv_wrapper.xlsx_to_list_of_list("combined_names.xlsx")
-    search_words = [x[0] for x in list_of_list]
-    if i >= len(search_words):
-        return False
-    search_word = search_words[i]
-    if len(search_word) < 5:
-        return False
-    url = f"https://www.google.co.jp/search?q={search_word}&tbm=isch"
-    print(search_word)
-    return url
-
-
-def get_raw_meta_texts(i):
-    print('get_raw_meta_texts', i)
-    url = _gen_url(i)
-    if not url:
-        return
-    print('running Chrome...')
-    c = Chrome()
-    c.get(url)
-    _scroll_google_search_to_the_bottom(c)
-    print('exacting by xpath...')
-    elements = c.xpath_lxml('//*[@class = "rg_meta notranslate"]')
-    raw_meta_texts = list(map(lambda x: x.text_content(), elements))
-    c.quit()
-    _save_as_excel(i, raw_meta_texts)
-    with open(f'result_report.txt', 'a') as f:
-        text = f'index{i} wrote {len(raw_meta_texts)} meta datas\n'
-        f.write(text)
-        print(text)
-
-
-def _save_as_excel(i, raw_meta_texts):
-    print('saving as excel...')
-    filename = f'result/raw_meta_texts{i}.xlsx'.replace('/', os.sep)
-    list_of_list = map(lambda x: [x, ], raw_meta_texts)
-    csv_wrapper.xlsx_from_list_of_list(filename, list_of_list)
+def _meta_dict_to_urls(dict_):
+    image_url = dict_['ou']
+    hp_url = dict_['ru']
+    return image_url, hp_url
 
 
 if __name__ == '__main__':
-    args = sys.argv
-    this_filename, i = args
-    get_raw_meta_texts(int(i))
+    search_word = "社是"
+    url = f"https://www.google.co.jp/search?q={search_word}&tbm=isch"
+    pprint(get_raw_meta_texts(url))

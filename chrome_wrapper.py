@@ -66,6 +66,8 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
     options.add_argument("--disable-infobars")
     options.add_argument("user-agent=" + userAgent)
     try:
+        if os.uname()[0] == 'Linux' or headless:
+            options.add_argument("--headless")
         if os.uname()[0] == 'Linux':
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-gpu')
@@ -75,8 +77,6 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
         pass
 
     # options.add_extension(r"cboljikjholhcbejolmkhhpmomhcodkc.crx")
-    if headless:
-        options.add_argument("--headless")
     if cookie_key is not None:
         set_cookie(options, cookie_key)
         try:

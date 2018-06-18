@@ -24,3 +24,4 @@ def to_xlsx(filename, list_of_list):
     for row_index, row in enumerate(list_of_list):
         for col_index, cell in enumerate(row):
             worksheet.write(row_index, col_index, cell)
+    workbook.close()
