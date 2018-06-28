@@ -80,7 +80,10 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
     except (Exception, ) as e:
         options.add_argument(
             "download.default_directory=C:/Users/umi/Downloads")
-
+        from os import path
+        extenion_path = path.join(path.dirname(path.abspath(
+            __file__)), "chrome_extension_xpath_helper.crx")
+        options.add_extension(extenion_path)
     try:
         if os.uname()[0] == 'Linux' or headless:
             options.add_argument("--headless")
@@ -91,10 +94,7 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
             options.add_argument("--headless")
     except (Exception, ) as e:
         pass
-    from os import path
-    extenion_path = path.join(path.dirname(path.abspath(
-        __file__)), "chrome_extension_xpath_helper.crx")
-    options.add_extension(extenion_path)
+
     if cookie_key is not None:
         set_cookie(options, cookie_key)
         try:
