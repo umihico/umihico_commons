@@ -18,6 +18,11 @@ except (Exception, ) as e:
     print(e)
 
 
+def rename_method(pure_elements):
+    for pure_element in pure_elements:
+        pure_element.xpath = pure_element.find_elements_by_xpath
+
+
 def _clean_unused_cookies(cookies_base_path):
     """if you can rename, delete it."""
     folder_names = os.listdir(cookies_base_path)
@@ -62,9 +67,20 @@ def _gen_executable_path():
 
 
 def _gen_ChromeOptions(userAgent, cookie_key, headless):
+
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-infobars")
     options.add_argument("user-agent=" + userAgent)
+    try:
+        if os.uname()[0] == 'Linux':
+            options.add_argument(
+                "download.default_directory=/home/ec2-user/downloads")
+        else:
+            raise Exception("not linux")
+    except (Exception, ) as e:
+        options.add_argument(
+            "download.default_directory=C:/Users/umi/Downloads")
+
     try:
         if os.uname()[0] == 'Linux' or headless:
             options.add_argument("--headless")
@@ -75,8 +91,10 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
             options.add_argument("--headless")
     except (Exception, ) as e:
         pass
-
-    # options.add_extension(r"cboljikjholhcbejolmkhhpmomhcodkc.crx")
+    from os import path
+    extenion_path = path.join(path.dirname(path.abspath(
+        __file__)), "chrome_extension_xpath_helper.crx")
+    options.add_extension(extenion_path)
     if cookie_key is not None:
         set_cookie(options, cookie_key)
         try:
@@ -159,6 +177,8 @@ class Chrome(webdriver.Chrome):
             else:
                 raise
         self.maximize_window()
+        self.backup_executor_url = self.command_executor._url
+        self.backup_session_id = self.session_id
 
     def get(self, url):
         try:
@@ -168,7 +188,16 @@ class Chrome(webdriver.Chrome):
             raise
 
     def xpath_lxml(self, path, make_links_absolute=False):
-        doc = html.fromstring(self.page_source)
+        try:
+            page_source = self.page_source
+        except (Exception, ) as e:
+            # executor_url, session_id = self.backup_executor_url, self.backup_session_id
+            # self = webdriver.Remote(
+            #     command_executor=executor_url, desired_capabilities={})
+            # self.session_id = session_id
+            raise
+
+        doc = html.fromstring(page_source)
         if make_links_absolute:
             html.make_links_absolute(doc, base_url=self.current_url)
         elements = doc.xpath(path)
@@ -178,6 +207,7 @@ class Chrome(webdriver.Chrome):
         lxml_elements = self.xpath_lxml(path)
         pure_elements = self.find_elements_by_xpath(
             path) if bool(len(lxml_elements)) else []
+        rename_method(pure_elements)
         wrapped_elements = WebElementsWrapper(
             pure_elements, IndexError_msg, path)
         return wrapped_elements
