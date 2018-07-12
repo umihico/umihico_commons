@@ -4,18 +4,21 @@ import xlrd
 
 def load_xlsx(filename):
     xl_workbook = xlrd.open_workbook(filename)
+    return _load_xlsx(xl_workbook)
+
+
+def _load_xlsx(xl_workbook):
     xl_sheet = xl_workbook.sheet_by_index(0)
-    row = xl_sheet.row(0)  # 1st row
     nrows = xl_sheet.nrows
     ncols = xl_sheet.ncols
-    list_of_list = []
+    rows = []
     for row_index in range(0, nrows):
-        list_ = []
+        row = []
         for col_index in range(0, ncols):
-            cell_str = str(xl_sheet.cell(row_index, col_index).value)
-            list_.append(cell_str)
-        list_of_list.append(list_)
-    return list_of_list
+            cell_value = str(xl_sheet.cell(row_index, col_index).value)
+            row.append(cell_value)
+        rows.append(row)
+    return rows
 
 
 def to_xlsx(filename, list_of_list):

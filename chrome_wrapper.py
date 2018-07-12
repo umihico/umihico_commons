@@ -10,12 +10,17 @@ from traceback import format_exc
 from time import sleep
 import re
 import datetime
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 try:
     import logging
     from selenium.webdriver.remote.remote_connection import LOGGER
     LOGGER.setLevel(logging.WARNING)
 except (Exception, ) as e:
     print(e)
+try:
+    from requests_common import user_agent as default_userAgent
+except (Exception, ) as e:
+    from .requests_common import user_agent as default_userAgent
 
 
 def rename_method(pure_elements):
@@ -66,7 +71,7 @@ def _gen_executable_path():
     return path
 
 
-def _gen_ChromeOptions(userAgent, cookie_key, headless):
+def gen_ChromeOptions(userAgent=default_userAgent, cookie_key=None, headless=False):
 
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-infobars")
@@ -108,6 +113,14 @@ def _gen_ChromeOptions(userAgent, cookie_key, headless):
                     sleep(5)
 
     return options
+
+
+default_custom_chrome_options = gen_ChromeOptions()
+dirname, filename = os.path.split(os.path.abspath(__file__))
+path = os.path.join(dirname, "proxy.zip")
+# print(path)
+# default_custom_chrome_options.add_extension(path)
+# default_custom_chrome_options.add_argument("--kiosk")
 
 
 def _gen_cookie_folder_name(name='no_name'):
@@ -155,19 +168,26 @@ def set_cookie(options, cookie_key):
     options.add_argument("user-data-dir=" + this_cookie_path)
 
 
-def _gen_desired_capabilities(userAgent):
-    headers = {
-        "phantomjs.page.settings.userAgent": userAgent,
-        'marionette': True}
-    return headers
+def gen_desired_capabilities(userAgent):
+    desired_capabilities = DesiredCapabilities().CHROME
+    desired_capabilities["pageLoadStrategy"] = "normal"
+    # "normal"  # complete
+    # "eager"  #  only html
+    # "none" # immediately
+    desired_capabilities["phantomjs.page.settings.userAgent"] = userAgent
+    desired_capabilities['marionette'] = True
+    return desired_capabilities
+
+
+default_custom_desired_capabilities = gen_desired_capabilities(
+    userAgent=default_userAgent)
 
 
 class Chrome(webdriver.Chrome):
-    def __init__(self, cookie_key=None, headless=False):
-        userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+    def __init__(self, userAgent=default_userAgent, cookie_key=None, headless=False, desired_capabilities=default_custom_desired_capabilities, chrome_options=default_custom_chrome_options):
         kwargs = {
-            'chrome_options': _gen_ChromeOptions(userAgent, cookie_key, headless),
-            'desired_capabilities': _gen_desired_capabilities(userAgent)}
+            'chrome_options': chrome_options,
+            'desired_capabilities': desired_capabilities}
         try:
             super().__init__(**kwargs)
         except (Exception, ) as e:

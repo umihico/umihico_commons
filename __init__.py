@@ -5,6 +5,7 @@ try:
     import google_cloud_vision_api
     import google_search
     import functools
+    import requests_wrapper
 except (Exception, ) as e:
     from . import chrome_wrapper
     from . import requests_common
@@ -12,3 +13,4 @@ except (Exception, ) as e:
     from . import google_cloud_vision_api
     from . import google_search
     from . import functools
+    from . import requests_wrapper

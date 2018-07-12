@@ -5,6 +5,7 @@ import json
 from requests import post
 from passpacker import passwords
 from pprint import pprint
+from io import BytesIO
 
 
 def print_texts(texts):
@@ -12,37 +13,52 @@ def print_texts(texts):
      for text in texts]
 
 
-def recognize_captcha(image_path_list):
-    images = []
-    for path in image_path_list:
-        if path.startswith("http"):
-            image = {"source": {'imageUri': path}}
-        else:
-            image = {'content': base64.b64encode(
-                open(path, 'rb').read()).decode("UTF-8")}
-        images.append(image)
+def post_request(images):
     request_list = [
         {'image': image, 'features': [
-            {'type': "TEXT_DETECTION", 'maxResults': 100}]}
+            {'type': "TEXT_DETECTION", 'maxResults': 1000}]}
         for image in images]
-    # request_list = [
-    #     {'image': {'content': ef}, 'features': [
-    #         {'type': "TEXT_DETECTION", 'maxResults': 100}]}
-    # for ef in encode_files]
     json_data = json.dumps({'requests': request_list})
     url = "https://vision.googleapis.com/v1/images:annotate?key="
     api_key = passwords['google_cloud_vision_api']
     headers = {'Content-Type': 'application/json'}
+    raw_response = post(url + api_key, data=json_data, json=headers)
+    raw_response.raise_for_status()
+    return raw_response
 
-    print("Google Cloud Vision Api...", end='')
-    obj_response = post(url + api_key, data=json_data, json=headers)
-    print("end request")
+
+def _encode_image(image):
+    return {'content': base64.b64encode(image).decode("UTF-8")}
+
+
+def _to_image(data):
+    if bool(type(data) is str):
+        if data.startswith("http"):
+            image = {"source": {'imageUri': data}}  # url
+        else:
+            image = _encode_image(open(data, 'rb').read())  # local path
+    else:
+        f = BytesIO()
+        data.save(f, format="png")  # data was pil_image
+        content = f.getbuffer()
+        # f.close()
+        image = _encode_image(content)
+    return image
+
+
+def get_json_result(datas):
+    images = [_to_image(data) for data in datas]
+    raw_response = post_request(images)
+    dumped = ast.literal_eval(raw_response.text)
+    return dumped
+
+
+def get_text_result(datas):
+    dumped = get_json_result(datas)
     try:
-        obj_response.raise_for_status()
-        dumped = ast.literal_eval(obj_response.text)
         texts = []
-        for response, path in zip(dumped["responses"], image_path_list):
-            if response and 'error' not in response:
+        for response, path in zip(dumped["responses"], datas):
+            if response and 'error' not in response.keys():
                 texts.append(response["textAnnotations"][0]['description'])
             else:
                 if 'error' in response:
@@ -89,9 +105,9 @@ def gen_ocr_pair_on_new_xlsx(urls_xlsx_path, save_filename):
 
 
 if __name__ == '__main__':
-    text = recognize_captcha(
-        #     # ["test.jpg", "test2.png", "http://www.tokai-com.co.jp/company/images/soshikizu_img01.gif", "large.jpg", "http://www.flowersinspace.com/img/lean-to-greenhouse/_thumb/mind-santa-barbara-montecito-x-greenhouse-santa-barbara-montecito-x-greenhouse-free-shipping_lean-to-greenhouse_250x250.jpg"])
-        ["http://brightcove04.o.brightcove.com/1764166205001/1764166205001_5629748977001_5629752425001-vs.jpg?pubId=1764166205001", ])
+    text = get_text_result(
+        ["test1.gif",   "test0.gif",  "test2.png", ])
+    # ["http://brightcove04.o.brightcove.com/1764166205001/1764166205001_5629748977001_5629752425001-vs.jpg?pubId=1764166205001", ])
     print(text)
     # recognize_captcha("sosiki_tate.png")
     # load_data()
