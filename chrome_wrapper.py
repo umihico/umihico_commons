@@ -4,6 +4,8 @@ import os
 import sys
 import inspect
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import Select
 import shutil
 from distutils import dir_util
 from traceback import format_exc
@@ -251,6 +253,28 @@ class Chrome(webdriver.Chrome):
 
     def new_tab(self):
         self.execute_script('''window.open("","_blank");''')
+
+
+def _wrap_click_method(origin_click_method):
+    def move_and_click(self):
+        ActionChains(self.parent).move_to_element(self)
+        self.parent.execute_script("arguments[0].scrollIntoView();", self)
+        origin_click_method()
+    return move_and_click
+
+
+def _select_by_visible_text(WebElement, text):
+    Select(WebElement).select_by_visible_text(text)
+
+
+def _send_keys_select_all(WebElement):
+    WebElement.send_keys(Keys.CONTROL, 'a')
+
+
+def _wrap_WebElement(WebElement):
+    WebElement.click = _wrap_click_method(WebElement.click)
+    WebElement.select_by_visible_text = _select_by_visible_text
+    WebElement.send_keys_select_all = _send_keys_select_all
 
 
 class WebElementsWrapper(list):
