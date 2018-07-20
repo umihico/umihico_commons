@@ -39,7 +39,17 @@ def load_spreadsheet(url, jsondict=None):
 
 def update_cell(url, row, col, value, jsondict=None):
     worksheet = _open_spreadsheet(url, jsondict)
-    worksheet.update_cell(row - 1, col - 1, value)
+    worksheet.update_cell(row + 1, col + 1, value)
+
+
+def update_cells(url, rows, cols, values, jsondict=None):
+    worksheet = _open_spreadsheet(url, jsondict)
+    cell_list = []
+    for row, col, value in zip(rows, cols, values):
+        cell = worksheet.cell(row + 1, col + 1)
+        cell.value = value
+        cell_list.append(cell)
+    worksheet.update_cells(cell_list)
 
 
 if __name__ == '__main__':
