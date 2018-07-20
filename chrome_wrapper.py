@@ -1,33 +1,32 @@
 from selenium import webdriver
 from lxml import html
 import os
-import sys
-import inspect
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 import shutil
 from distutils import dir_util
-from traceback import format_exc
+from traceback import print_exc
 from time import sleep
 import re
 import datetime
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 try:
+    from functools import isLinux
+except (Exception, ) as e:
+    from .functools import isLinux
+
+try:
     import logging
     from selenium.webdriver.remote.remote_connection import LOGGER
     LOGGER.setLevel(logging.WARNING)
 except (Exception, ) as e:
-    print(e)
+    print_exc()
 try:
     from requests_common import user_agent as default_userAgent
 except (Exception, ) as e:
     from .requests_common import user_agent as default_userAgent
-
-
-def rename_method(pure_elements):
-    for pure_element in pure_elements:
-        pure_element.xpath = pure_element.find_elements_by_xpath
 
 
 def _clean_unused_cookies(cookies_base_path):
@@ -78,17 +77,13 @@ def gen_ChromeOptions(userAgent=default_userAgent, cookie_key=None, headless=Fal
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-infobars")
     options.add_argument("user-agent=" + userAgent)
-    try:
-        if os.uname()[0] == 'Linux':
-            options.add_argument(
-                "download.default_directory=/home/ec2-user/downloads")
-        else:
-            raise Exception("not linux")
-    except (Exception, ) as e:
+    if isLinux():
+        options.add_argument(
+            "download.default_directory=/home/ec2-user/downloads")
+    else:
         options.add_argument(
             "download.default_directory=C:/Users/umi/Downloads")
-        from os import path
-        extenion_path = path.join(path.dirname(path.abspath(
+        extenion_path = os.path.join(os.path.dirname(os.path.abspath(
             __file__)), "chrome_extension_xpath_helper.crx")
         options.add_extension(extenion_path)
     try:
@@ -111,7 +106,7 @@ def gen_ChromeOptions(userAgent=default_userAgent, cookie_key=None, headless=Fal
                 try:
                     set_cookie(options, cookie_key='copy')
                 except (Exception, ) as e:
-                    print(format_exc())
+                    print_exc()
                     sleep(5)
 
     return options
@@ -119,7 +114,7 @@ def gen_ChromeOptions(userAgent=default_userAgent, cookie_key=None, headless=Fal
 
 default_custom_chrome_options = gen_ChromeOptions()
 dirname, filename = os.path.split(os.path.abspath(__file__))
-path = os.path.join(dirname, "proxy.zip")
+proxy_zip_path = os.path.join(dirname, "proxy.zip")
 # print(path)
 # default_custom_chrome_options.add_extension(path)
 # default_custom_chrome_options.add_argument("--kiosk")
@@ -225,14 +220,8 @@ class Chrome(webdriver.Chrome):
         elements = doc.xpath(path)
         return elements
 
-    def xpath(self, path, IndexError_msg=None):
-        lxml_elements = self.xpath_lxml(path)
-        pure_elements = self.find_elements_by_xpath(
-            path) if bool(len(lxml_elements)) else []
-        rename_method(pure_elements)
-        wrapped_elements = WebElementsWrapper(
-            pure_elements, IndexError_msg, path)
-        return wrapped_elements
+    def xpath(self, xpath):
+        return Chrome_xpath(self, xpath)
 
     @property
     def all_text(self):
@@ -255,84 +244,57 @@ class Chrome(webdriver.Chrome):
         self.execute_script('''window.open("","_blank");''')
 
 
-def _wrap_click_method(origin_click_method):
-    def move_and_click(self):
-        ActionChains(self.parent).move_to_element(self)
-        self.parent.execute_script("arguments[0].scrollIntoView();", self)
-        origin_click_method()
-    return move_and_click
+def _gen_xpath_func(lxml_lambda):
+    def _xpath(self, xpath):
+        lxml_elements = lxml_lambda(self, xpath)
+        pure_elements = self.find_elements_by_xpath(
+            xpath) if bool(len(lxml_elements)) else []
+        return pure_elements
+    return _xpath
 
 
-def _select_by_visible_text(WebElement, text):
-    Select(WebElement).select_by_visible_text(text)
+Chrome_xpath = _gen_xpath_func(
+    lxml_lambda=lambda self, xpath: self.xpath_lxml(xpath))
+WebElement_xpath = _gen_xpath_func(lxml_lambda=lambda self, xpath: html.fromstring(
+    self.get_attribute('outerHTML')).xpath(xpath))
 
 
-def _send_keys_select_all(WebElement):
-    WebElement.send_keys(Keys.CONTROL, 'a')
+def _select_by_visible_text(self, text):
+    Select(self).select_by_visible_text(text)
 
 
-def _wrap_WebElement(WebElement):
-    WebElement.click = _wrap_click_method(WebElement.click)
+def _send_keys_select_all(self):
+    self.send_keys(Keys.CONTROL, 'a')
+
+
+def _scroll_here(self):
+    _perform = ActionChains(self.parent).move_to_element(self)
+    self.parent.execute_script("arguments[0].scrollIntoView();", self)
+    _perform.perform()
+
+
+def _move_and_click(self):
+    try:
+        self.origin_click()
+    except (Exception, ) as e:
+        try:
+            self.scroll_here()
+            self.origin_click()
+        except (Exception, ) as e:
+            raise
+
+
+def edit_WebElement():
+    # _move_and_click need "origin_click"
+    WebElement.origin_click = WebElement.click
+    WebElement.xpath = WebElement_xpath
+    WebElement.click = _move_and_click
     WebElement.select_by_visible_text = _select_by_visible_text
     WebElement.send_keys_select_all = _send_keys_select_all
+    WebElement.scroll_here = _scroll_here
 
 
-class WebElementsWrapper(list):
-    """to be able to prevent IndexError by Chrome.xpath(path)[0]"""
-    """to set useful properties like .texts"""
-
-    def __init__(self, webelements, IndexError_msg, xpath):
-        self.IndexError_msg = IndexError_msg
-        self.xpath = xpath
-        super().__init__(webelements)
-
-    def __getitem__(self, key):
-        if len(self) <= key and not self.IndexError_msg is None:
-            return WebElementPretender(self.IndexError_msg)
-        else:
-            try:
-                return super().__getitem__(key)
-            except (Exception, ) as e:
-                print(e)
-                print(f'key:{key}')
-                print(f'xpath:{self.xpath}')
-                print(f'len:{len(self)}')
-                raise
-
-    def __getattr__(self, key):
-        if key.endswith('s'):  # hrefs, srcs, texts
-            keys = key
-            key = keys[:len(keys) - 1]
-            try:
-                return_ = [getattr(x, key) for x in self]  # text
-            except (Exception, ) as e:
-                try:
-                    return_ = [x.get_attribute(key) for x in self]  # href
-                except (Exception, ) as e:
-                    pass
-            return return_
-        else:
-            raise Exception(f'__getattr__ got unknown key:{key}')
-
-
-class WebElementPretender():
-    """to prevent AttributeError by Chrome.xpath(path)[0].text"""
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
-
-    def __repr__(self):
-        return self.msg
-
-    def get_attribute(self, key):
-        return self.msg
-
-    def __getattr__(self, key):
-        return self.msg
-
+edit_WebElement()
 
 if __name__ == '__main__':
     c = Chrome()

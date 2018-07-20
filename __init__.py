@@ -6,6 +6,9 @@ try:
     import google_search
     import functools
     import requests_wrapper
+    import strings
+    import lxml_commons
+    import spreadsheet
 except (Exception, ) as e:
     from . import chrome_wrapper
     from . import requests_common
@@ -14,3 +17,6 @@ except (Exception, ) as e:
     from . import google_search
     from . import functools
     from . import requests_wrapper
+    from . import strings
+    from . import lxml_commons
+    from . import spreadsheet

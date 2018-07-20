@@ -4,6 +4,14 @@ from pprint import pformat
 from multiprocessing import Pool, cpu_count, dummy
 from tqdm import tqdm
 from itertools import zip_longest
+import os
+
+
+def isLinux():
+    try:
+        return bool(os.uname()[0] == 'Linux')
+    except (Exception, ) as e:
+        return False
 
 
 def chunks(list_, chunk_len):
