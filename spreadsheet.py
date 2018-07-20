@@ -1,6 +1,6 @@
-from passpacker import passwords
 from ast import literal_eval
 from oauth2client.service_account import ServiceAccountCredentials
+from passpacker import passwords
 import gspread
 
 
@@ -11,34 +11,34 @@ def _load_dict_from_passpacker():
 gc = False
 
 
-def authorize():
+def authorize(jsondict=None):
+    jsondict = jsondict or _load_dict_from_passpacker()
     global gc
     if gc:
         return gc
     print('authorizing...')
     scope = ['https://spreadsheets.google.com/feeds']
-    json_key = _load_dict_from_passpacker()
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(
-        json_key, scope)
+        jsondict, scope)
     gc = gspread.authorize(credentials)
     return gc
 
 
-def _open_spreadsheet(url):
-    gc = authorize()
-    book = gc.open_by_url(book_url)
+def _open_spreadsheet(url, jsondict=None):
+    gc = authorize(jsondict)
+    book = gc.open_by_url(url)
     worksheet = book.get_worksheet(0)
     return worksheet
 
 
-def load_spreadsheet(url):
+def load_spreadsheet(url, jsondict=None):
     """return values by list of list"""
-    worksheet = _open_spreadsheet(url)
+    worksheet = _open_spreadsheet(url, jsondict)
     return worksheet.get_all_values()
 
 
-def update_cell(url, row, col, value):
-    worksheet = _open_spreadsheet(url)
+def update_cell(url, row, col, value, jsondict=None):
+    worksheet = _open_spreadsheet(url, jsondict)
     worksheet.update_cell(row, col, value)
 
 
