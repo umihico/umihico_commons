@@ -2,6 +2,7 @@ from ast import literal_eval
 from oauth2client.service_account import ServiceAccountCredentials
 from passpacker import passwords
 import gspread
+from gspread import Worksheet
 
 
 def _load_dict_from_passpacker():
@@ -27,7 +28,6 @@ def _open_spreadsheet(url, jsondict=None):
 def open_worksheet(url, jsondict=None, sheetindex=0):
     book = _open_spreadsheet(url, jsondict)
     worksheet = book.get_worksheet(sheetindex)
-    worksheet._update_cells = _update_cells
     return worksheet
 
 
@@ -44,6 +44,8 @@ def _update_cells(self, rows_cols_values_list):
         cell_list.append(cell)
     self.update_cells(cell_list)
 
+
+Worksheet._update_cells = _update_cells
 
 if __name__ == '__main__':
     book_url = "https://docs.google.com/spreadsheets/d/15URyeuU9yUkk5hoj5p69AxOVFtu1e5JRdA0c-G_p2io/edit#gid=0"
