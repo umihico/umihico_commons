@@ -25,9 +25,9 @@ class Session(requests_Session):
                 'http': 'http://' + Proxy,
                 'https': 'https://' + Proxy, }
 
-    def get(self, url):
+    def get(self, url, connet_timeout=10, read_time=30):
         # connect timeoutを10秒, read timeoutを30秒に設定
-        return super().get(url, timeout=(10.0, 30.0))
+        return super().get(url, timeout=(connet_timeout, read_time))
 
 
 if __name__ == '__main__':
