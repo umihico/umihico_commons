@@ -12,11 +12,9 @@ from time import sleep
 import re
 import datetime
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-try:
-    from functools import isLinux
-except (Exception, ) as e:
-    from .functools import isLinux
-
+from umihico_commons.functools import isLinux
+from umihico_commons._chrome_actions import do_actions, ALL_ELEMENTS, RETERN_TEXT
+from pprint import pformat
 try:
     import logging
     from selenium.webdriver.remote.remote_connection import LOGGER
@@ -223,6 +221,12 @@ class Chrome(webdriver.Chrome):
     def xpath(self, xpath):
         return Chrome_xpath(self, xpath)
 
+    def xpath0(self, xpath):
+        return self.xpath(xpath)[0]
+
+    def do_actions(self, actions):
+        return do_actions(self, actions)
+
     @property
     def all_text(self):
         body_element = self.find_element_by_tag_name('body')
@@ -249,8 +253,21 @@ def _gen_xpath_func(lxml_lambda):
         lxml_elements = lxml_lambda(self, xpath)
         pure_elements = self.find_elements_by_xpath(
             xpath) if bool(len(lxml_elements)) else []
-        return pure_elements
+        return ElementList(pure_elements, xpath)
     return _xpath
+
+
+class ElementList(list):
+    def __init__(self, iterable, xpath):
+        super().__init__(iterable)
+        self.xpath = xpath
+
+    def __getitem__(self, index):
+        try:
+            return super().__getitem__(index)
+        except (IndexError, ) as e:
+            error_msg = {'xpath': self.xpath, 'len': len(self), 'index': index}
+            raise IndexError(error_msg) from e
 
 
 Chrome_xpath = _gen_xpath_func(
@@ -274,29 +291,23 @@ def _scroll_here(self):
 
 
 def _move_and_click(self):
-    try:
-        self.origin_click()
-    except (Exception, ) as e:
-        try:
-            self.scroll_here()
-            self.origin_click()
-        except (Exception, ) as e:
-            raise
+    # try:
+    #     self.origin_click()
+    # except (Exception, ) as e:
+    self.scroll_here()
+    self.origin_click()
 
 
 def edit_WebElement():
-    # _move_and_click need "origin_click"
-    WebElement.origin_click = WebElement.click
-    WebElement.xpath = WebElement_xpath
-    WebElement.click = _move_and_click
-    WebElement.select_by_visible_text = _select_by_visible_text
-    WebElement.send_keys_select_all = _send_keys_select_all
-    WebElement.scroll_here = _scroll_here
+    try:
+        already_set = getattr(WebElement, "origin_click")
+    except (Exception, ) as e:
+        WebElement.origin_click = WebElement.click
+        WebElement.click = _move_and_click
+        WebElement.xpath = WebElement_xpath
+        WebElement.select_by_visible_text = _select_by_visible_text
+        WebElement.send_keys_select_all = _send_keys_select_all
+        WebElement.scroll_here = _scroll_here
 
 
 edit_WebElement()
-
-if __name__ == '__main__':
-    c = Chrome()
-    c.get("https://ja.wikipedia.org/wiki/%E6%9D%B1%E4%BA%AC%E3%83%89%E3%83%BC%E3%83%A0")
-    print(c.all_text)

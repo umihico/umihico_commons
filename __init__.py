@@ -8,6 +8,7 @@ try:
     import requests_wrapper
     import strings
     import lxml_commons
+    import image
     import spreadsheet
 except (Exception, ) as e:
     from . import chrome_wrapper
@@ -19,4 +20,5 @@ except (Exception, ) as e:
     from . import requests_wrapper
     from . import strings
     from . import lxml_commons
+    from . import image
     from . import spreadsheet

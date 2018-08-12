@@ -5,6 +5,11 @@ from multiprocessing import Pool, cpu_count, dummy
 from tqdm import tqdm
 from itertools import zip_longest
 import os
+import re
+
+
+class PlannedException(Exception):
+    pass
 
 
 def isLinux():
@@ -25,6 +30,10 @@ def chunks(list_, chunk_len):
     return list(list_[i:i + chunk_len] for i in range(0, len(list_), chunk_len))
 
 
+def flatten(list_of_list):
+    return [x for list_ in list_of_list for x in list_]
+
+
 def save_as_txt(filename, data, mode='w'):
     with codecs.open(filename, mode, 'utf-8') as f:
         f.write(pformat(data))
@@ -33,6 +42,10 @@ def save_as_txt(filename, data, mode='w'):
 def load_from_txt(filename):
     with codecs.open(filename, 'r', 'utf-8') as f:
         return literal_eval(f.read())
+
+
+def numberize(string):
+    return re.sub(r'\D', '', string)
 
 
 def map_multiprocessing(func, args_rows=None, kwargs_rows=None):

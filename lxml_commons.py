@@ -1,4 +1,14 @@
+try:
+    from requests_wrapper import get
+except (Exception, ) as e:
+    from .requests_wrapper import get
 from collections import OrderedDict
+from lxml import html
+
+
+def url_to_lxml(url, get_func=get):
+    lxml_ = html.fromstring(get_func(url).text)
+    return lxml_
 
 
 def add_ths(lxml_table_element):
