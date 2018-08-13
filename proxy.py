@@ -58,7 +58,7 @@ class ProxyRequests():
         self.last_proxy_refilled_time = time()
 
     def get(self, url, res_test_func):
-        if self.last_proxy_refilled_time - time() > 60 * 60:
+        if time() - self.last_proxy_refilled_time > 60 * 60:
             self.refill_proxy()
         # print(url)
         success = False
