@@ -40,7 +40,7 @@ class ProxyRequests():
         proxies = get_anonymous_proxy()
         old_proxies = old_proxies or []
         new_proxies = list(set(proxies) - set(old_proxies))
-        all_proxies = list(set(proxies) + set(old_proxies))
+        all_proxies = list(set([*proxies, *old_proxies]))
         save_as_txt("proxy.txt", all_proxies)
         self._add_proxies(new_proxies)
 
