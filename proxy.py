@@ -32,12 +32,17 @@ class _ProxyQueue():
 class ProxyRequests():
     def __init__(self):
         self.proxyqueue = _ProxyQueue()
+        self.scrap_new_proxy()
+        self.last_proxy_refilled_time = time()
 
-    def scrap_new_proxy(self):
+    def scrap_new_proxy(self, old_proxies=None):
+        print("scrap_new_proxy...")
         proxies = get_anonymous_proxy()
-        save_as_txt("proxy.txt", proxies)
-        self._add_proxies(proxies)
-        return proxies
+        old_proxies = old_proxies or []
+        new_proxies = list(set(proxies) - set(old_proxies))
+        all_proxies = list(set(proxies) + set(old_proxies))
+        save_as_txt("proxy.txt", all_proxies)
+        self._add_proxies(new_proxies)
 
     def load_proxy(self):
         proxies = load_from_txt("proxy.txt")
@@ -47,7 +52,14 @@ class ProxyRequests():
         for proxy in proxies:
             self.proxyqueue.add_new_proxy(proxy)
 
+    def refill_proxy(self):
+        old_proxies = load_from_txt("proxy.txt")
+        self.scrap_new_proxy(old_proxies=old_proxies)
+        self.last_proxy_refilled_time = time()
+
     def get(self, url, res_test_func):
+        if self.last_proxy_refilled_time - time() > 60 * 60:
+            self.refill_proxy()
         # print(url)
         success = False
         while not success:
@@ -68,7 +80,7 @@ class ProxyRequests():
                     # print("test success")
                 else:
                     # print("test failed")
-                    score += 30
+                    score += 10
                 self.proxyqueue.put(proxy, score)
 
         # print("success!!!", proxy)
