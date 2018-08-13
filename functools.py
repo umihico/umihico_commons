@@ -48,16 +48,16 @@ def numberize(string):
     return re.sub(r'\D', '', string)
 
 
-def map_multiprocessing(func, args_rows=None, kwargs_rows=None):
+def map_multiprocessing(func, args_rows=None, kwargs_rows=None, count=-1):
     """return [func(*args,**kwargs) for args,kwargs in zip_longest(args_rows, kwargs_rows)]
     with multiprocessing"""
     return _map(func, args_rows, kwargs_rows, -1, Pool)
 
 
-def map_multithreading(func, args_rows=None, kwargs_rows=None):
+def map_multithreading(func, args_rows=None, kwargs_rows=None, count=100):
     """return [func(*args,**kwargs) for args,kwargs in zip_longest(args_rows, kwargs_rows)]
     with multithreading"""
-    return _map(func, args_rows, kwargs_rows, 100, dummy.Pool)
+    return _map(func, args_rows, kwargs_rows, count, dummy.Pool)
 
 
 def _gen_wrapped_func(func):
