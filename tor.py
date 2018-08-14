@@ -1,8 +1,5 @@
 from requests import Session
-try:
-    import functools as umihico_functools
-except (Exception, ) as e:
-    from . import functools as umihico_functools
+from umihico_commons.functools import isLinux
 
 _port_num = "9050" if isLinux() else "9150"
 _tor_session = Session()
