@@ -1,7 +1,6 @@
-from umihico_commons.functools import isLinux
 from requests import Session
 
-_port_num = "9050" if isLinux() else "9150"
+_port_num = "9050" if True else "9150"
 _tor_session = Session()
 _tor_session.headers['User-Agent'] = "Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0"
 _tor_session.proxies = dict(
