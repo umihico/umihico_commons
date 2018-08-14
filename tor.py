@@ -1,32 +1,31 @@
-from requests import get as requests_get
 from requests import Session
-import requests
-from traceback import print_exc
+try:
+    from functools import isLinux
+except (Exception, ) as e:
+    from .functools import isLinux
+
+_port_num = "9050" if isLinux() else "9150"
+_tor_session = Session()
+_tor_session.headers['User-Agent'] = "Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0"
+_tor_session.proxies = dict(
+    http=f'socks5h://127.0.0.1:{_port_num}',
+    https=f'socks5h://127.0.0.1:{_port_num}')
 
 
 def get(url):
-    session = requests.session()
-    session.cookies.clear()
-    proxies = dict(
-        http='socks5://127.0.0.1:9150',
-        https='socks5://127.0.0.1:9150')
-    session.proxies = proxies
-    session.headers = {}
-    session.headers['User-agent'] = 'HotJava/1.1.2 FCS'
-    res = session.get(url)
-    # res = requests_get(url, proxies=proxies, headers=headers)
-    return res
+    _tor_session.cookies.clear()
+    return _tor_session.get(url, timeout=(300, 300))
 
 
 if __name__ == '__main__':
-    my_ip = requests_get('http://checkip.amazonaws.com/').text
+    import requests
+    my_ip = requests.get('http://checkip.amazonaws.com/').text
     tor_ip = get('http://checkip.amazonaws.com/').text
     print(my_ip, tor_ip)
-    urls = ['socks5h://xiwayy2kn32bo3ko.onion',
-            'socks5h://www.facebookcorewwwi.onion']
-    for url in urls:
-        try:
-            onion_channel = get(url).headers
-            print(onion_channel)
-        except (Exception, ) as e:
-            print_exc()
+    from lxml import html
+    res = get('http://xiwayy2kn32bo3ko.onion')
+    res.encoding = 'Shift_JIS'
+    lxml = html.fromstring(res.text)
+    print(lxml.xpath("//title")[0].text_content())
+    print([x.text_content() for x in lxml.xpath("//a")])
+    print([x.get('href') for x in lxml.xpath("//a")])

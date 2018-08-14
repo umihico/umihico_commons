@@ -19,6 +19,15 @@ def isLinux():
         return False
 
 
+def iferror(func, value):
+    def new_func(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (Exception, ) as e:
+            return value
+    return new_func
+
+
 def chunks(list_, chunk_len):
     '''
     l = list(range(10))
