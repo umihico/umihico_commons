@@ -10,7 +10,7 @@ _tor_session.proxies = dict(
 
 def get(url):
     _tor_session.cookies.clear()
-    return _tor_session.get(url, timeout=(300, 300))
+    return _tor_session.get(url, timeout=(600, 600))
 
 
 if __name__ == '__main__':
