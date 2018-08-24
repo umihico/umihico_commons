@@ -4,6 +4,7 @@ from time import time
 from umihico_gist.get_anonymous_proxy.get_anonymous_proxy import get_anonymous_proxy
 from umihico_commons.functools import load_from_txt, save_as_txt, PlannedException
 import random
+import os
 
 
 class _ProxyQueue():
@@ -32,8 +33,11 @@ class _ProxyQueue():
 class ProxyRequests():
     def __init__(self):
         self.proxyqueue = _ProxyQueue()
+        if os.path.isfile("proxy.txt"):
+            self.load_proxy()
+            if time() - self.last_proxy_refilled_time < 3600:
+                return
         self.scrap_new_proxy()
-        self.last_proxy_refilled_time = time()
 
     def scrap_new_proxy(self, old_proxies=None):
         print("scrap_new_proxy...")
@@ -41,11 +45,16 @@ class ProxyRequests():
         old_proxies = old_proxies or []
         new_proxies = list(set(proxies) - set(old_proxies))
         all_proxies = list(set([*proxies, *old_proxies]))
-        save_as_txt("proxy.txt", all_proxies)
+        self.last_proxy_refilled_time = time()
+        self.seve_proxy(proxies)
         self._add_proxies(new_proxies)
 
+    def seve_proxy(self, proxies):
+        save_as_txt("proxy.txt", [self.last_proxy_refilled_time, proxies])
+
     def load_proxy(self):
-        proxies = load_from_txt("proxy.txt")
+        time_, proxies = load_from_txt("proxy.txt")
+        self.last_proxy_refilled_time = time_
         self._add_proxies(proxies)
 
     def _add_proxies(self, proxies):
@@ -55,7 +64,6 @@ class ProxyRequests():
     def refill_proxy(self):
         old_proxies = load_from_txt("proxy.txt")
         self.scrap_new_proxy(old_proxies=old_proxies)
-        self.last_proxy_refilled_time = time()
 
     def get(self, url, res_test_func):
         if time() - self.last_proxy_refilled_time > 60 * 60:
