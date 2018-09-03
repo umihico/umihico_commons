@@ -4,20 +4,11 @@ import xlrd
 
 def load_xlsx(filename):
     xl_workbook = xlrd.open_workbook(filename)
-    return _load_xlsx(xl_workbook)
-
-
-def _load_xlsx(xl_workbook):
     xl_sheet = xl_workbook.sheet_by_index(0)
     nrows = xl_sheet.nrows
     ncols = xl_sheet.ncols
-    rows = []
-    for row_index in range(0, nrows):
-        row = []
-        for col_index in range(0, ncols):
-            cell_value = str(xl_sheet.cell(row_index, col_index).value)
-            row.append(cell_value)
-        rows.append(row)
+    rows = [[str(xl_sheet.cell(row_index, col_index).value)
+             for col_index in range(0, ncols)] for row_index in range(0, nrows)]
     return rows
 
 

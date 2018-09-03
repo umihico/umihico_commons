@@ -5,6 +5,14 @@ from umihico_gist.get_anonymous_proxy.get_anonymous_proxy import get_anonymous_p
 from umihico_commons.functools import load_from_txt, save_as_txt, PlannedException
 import random
 import os
+from collections import namedtuple
+from threading import Lock
+EmptyResponse = namedtuple('EmptyResponse', ('text', 'json', ))
+emptyresponse = EmptyResponse(text="", json=dict(),)
+
+
+class TooManyGetFailedException(Exception):
+    pass
 
 
 class _ProxyQueue():
@@ -32,6 +40,7 @@ class _ProxyQueue():
 
 class ProxyRequests():
     def __init__(self):
+        self.scrap_new_proxy_lock = Lock()
         self.proxyqueue = _ProxyQueue()
         if os.path.isfile("proxy.txt"):
             self.load_proxy()
@@ -40,6 +49,8 @@ class ProxyRequests():
         self.scrap_new_proxy()
 
     def scrap_new_proxy(self, old_proxies=None):
+        if not self.scrap_new_proxy_lock.acquire(False):
+            return
         print("scrap_new_proxy...")
         proxies = get_anonymous_proxy()
         old_proxies = old_proxies or []
@@ -48,6 +59,7 @@ class ProxyRequests():
         self.last_proxy_refilled_time = time()
         self.seve_proxy(proxies)
         self._add_proxies(new_proxies)
+        self.scrap_new_proxy_lock.release()
 
     def seve_proxy(self, proxies):
         save_as_txt("proxy.txt", [self.last_proxy_refilled_time, proxies])
@@ -65,12 +77,16 @@ class ProxyRequests():
         old_proxies = load_from_txt("proxy.txt")
         self.scrap_new_proxy(old_proxies=old_proxies)
 
-    def get(self, url, res_test_func):
+    def get(self, url, res_test_func, failed_count_limit=10):
         if time() - self.last_proxy_refilled_time > 60 * 60:
             self.refill_proxy()
         # print(url)
         success = False
+        failed_count = -1
         while not success:
+            failed_count += 1
+            if failed_count > failed_count_limit:
+                raise TooManyGetFailedException()
             score, proxy = self.proxyqueue.get()
             # print(score, proxy, url)
             start_time = time()

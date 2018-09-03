@@ -6,6 +6,18 @@ from tqdm import tqdm
 from itertools import zip_longest
 import os
 import re
+from umihico_private import get_key
+import requests
+
+
+def line_notify_me(message):
+    api_key = get_key('line_notify_me')
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Bearer " + api_key
+    }
+    url = "https://notify-api.line.me/api/notify"
+    req = requests.post(url, headers=headers, data={"message": message})
 
 
 class PlannedException(Exception):
@@ -101,3 +113,7 @@ def _map(func, args_rows=None, kwargs_rows=None, max_process=-1, pool_func=Pool)
         enumerated_results.sort(key=lambda x: x[0])
         results = [result for i, result in enumerated_results]
         return results
+
+
+if __name__ == '__main__':
+    line_notify_me('# NOTE: ')
