@@ -7,18 +7,32 @@ from requests import get as requests_get
 from lxml import html
 
 
+def save_img(response, filename):
+    img = Image.open(BytesIO(response.content))
+    img.convert('RGB').save(filename)
+
+
+def save_img_response_test_func(response):
+    try:
+        img = Image.open(BytesIO(response.content))
+        img.convert('RGB')
+        return True
+    except Exception as e:
+        return False
+
+
 def get_with_proxy(url, proxy):
     s = Session(Proxy=proxy)
     res = s.get(url)
     return res
 
 
-def url_to_lxml(url):
-    return html.fromstring(get(url).text)
-
-
 def get(url):
     return requests_get(url, headers=headers_dict_user_agent)
+
+
+def url_to_lxml(url):
+    return html.fromstring(get(url).text)
 
 
 class Session(requests_Session):

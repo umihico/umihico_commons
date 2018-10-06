@@ -6,6 +6,20 @@ from collections import OrderedDict
 from lxml import html
 
 
+def get_hint(lxml_element):
+    current_element = lxml_element
+    hint_string = ''
+    while True:
+        attributes = ' '.join(
+            [k + '=' + v for k, v in current_element.items()])
+        hint_string = f"<{current_element.tag} {attributes}>/" + \
+            hint_string
+        if current_element.tag == 'html':
+            break
+        current_element = current_element.getparent()
+    return hint_string
+
+
 def url_to_lxml(url, get_func=get):
     lxml_ = html.fromstring(get_func(url).text)
     return lxml_

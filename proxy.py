@@ -9,6 +9,7 @@ from collections import namedtuple
 from threading import Lock
 EmptyResponse = namedtuple('EmptyResponse', ('text', 'json', ))
 emptyresponse = EmptyResponse(text="", json=dict(),)
+refill_proxy_frequency_sec = 60 * 60 * 2
 
 
 class TooManyGetFailedException(Exception):
@@ -44,7 +45,7 @@ class ProxyRequests():
         self.proxyqueue = _ProxyQueue()
         if os.path.isfile("proxy.txt"):
             self.load_proxy()
-            if time() - self.last_proxy_refilled_time < 3600:
+            if time() - self.last_proxy_refilled_time < refill_proxy_frequency_sec:
                 return
         self.scrap_new_proxy()
 
@@ -78,7 +79,7 @@ class ProxyRequests():
         self.scrap_new_proxy(old_proxies=old_proxies)
 
     def get(self, url, res_test_func, failed_count_limit=10):
-        if time() - self.last_proxy_refilled_time > 60 * 60:
+        if time() - self.last_proxy_refilled_time > refill_proxy_frequency_sec:
             self.refill_proxy()
         # print(url)
         success = False
@@ -86,7 +87,8 @@ class ProxyRequests():
         while not success:
             failed_count += 1
             if failed_count > failed_count_limit:
-                raise TooManyGetFailedException()
+                print(f'ProxyRequests.get error:{url}')
+                return url
             score, proxy = self.proxyqueue.get()
             # print(score, proxy, url)
             start_time = time()
