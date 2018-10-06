@@ -54,7 +54,8 @@ class ProxyRequests():
             return
         print("scrap_new_proxy...")
         proxies = get_anonymous_proxy()
-        old_proxies = old_proxies or []
+        old_proxies = old_proxies or ['dummy', []]
+        old_proxies = old_proxies[1]
         new_proxies = list(set(proxies) - set(old_proxies))
         all_proxies = list(set([*proxies, *old_proxies]))
         self.last_proxy_refilled_time = time()
