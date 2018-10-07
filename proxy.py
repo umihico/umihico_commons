@@ -10,6 +10,7 @@ from threading import Lock
 EmptyResponse = namedtuple('EmptyResponse', ('text', 'json', ))
 emptyresponse = EmptyResponse(text="", json=dict(),)
 refill_proxy_frequency_sec = 60 * 60 * 2
+import itertools
 
 
 class TooManyGetFailedException(Exception):
@@ -40,7 +41,9 @@ class _ProxyQueue():
 
 
 class ProxyRequests():
-    def __init__(self):
+    def __init__(self, process_index=None, process_max_num):
+        self.process_index = process_index
+        self.process_max_num = process_max_num
         self.scrap_new_proxy_lock = Lock()
         self.proxyqueue = _ProxyQueue()
         if os.path.isfile("proxy.txt"):
@@ -75,8 +78,11 @@ class ProxyRequests():
         self._add_proxies(proxies)
 
     def _add_proxies(self, proxies):
-        for proxy in proxies:
-            self.proxyqueue.add_new_proxy(proxy)
+        # self.process_index self.process_max_num
+        #
+        for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num))):
+            if self.process_index == index:
+                self.proxyqueue.add_new_proxy(proxy)
 
     def refill_proxy(self):
         old_proxies = load_from_txt("proxy.txt")
