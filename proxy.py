@@ -49,6 +49,9 @@ class ProxyRequests():
                 return
         self.scrap_new_proxy()
 
+    def set_response_test_func(self, response_test_func):
+        self.response_test_func = response_test_func
+
     def scrap_new_proxy(self, old_proxies=None):
         if not self.scrap_new_proxy_lock.acquire(False):
             return
@@ -79,7 +82,8 @@ class ProxyRequests():
         old_proxies = load_from_txt("proxy.txt")
         self.scrap_new_proxy(old_proxies=old_proxies)
 
-    def get(self, url, res_test_func, failed_count_limit=10):
+    def get(self, url, res_test_func=None, failed_count_limit=10):
+        res_test_func = res_test_func or self.response_test_func
         if time() - self.last_proxy_refilled_time > refill_proxy_frequency_sec:
             self.refill_proxy()
         # print(url)
