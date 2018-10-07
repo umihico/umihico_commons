@@ -41,7 +41,7 @@ class _ProxyQueue():
 
 
 class ProxyRequests():
-    def __init__(self, process_index=None, process_max_num):
+    def __init__(self, process_index=None, process_max_num=None):
         self.process_index = process_index
         self.process_max_num = process_max_num
         self.scrap_new_proxy_lock = Lock()
