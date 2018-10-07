@@ -82,9 +82,10 @@ class ProxyRequests():
         # print(self.process_index, self.process_max_num)
         if self.process_index and self.process_max_num:
             for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
-                if self.process_index == index:
-                    # added_some = True
-                    self.proxyqueue.add_new_proxy(proxy)
+                self.proxyqueue.add_new_proxy(proxy)
+                # if self.process_index == index:
+                #     # added_some = True
+                #     self.proxyqueue.add_new_proxy(proxy)
             # if not added_some:
             #     for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
             #         print(proxy, index)
@@ -101,7 +102,7 @@ class ProxyRequests():
         old_proxies = load_from_txt("proxy.txt")
         self.scrap_new_proxy(old_proxies=old_proxies)
 
-    def get(self, url, res_test_func=None, failed_count_limit=10):
+    def get(self, url, res_test_func=None, failed_count_limit=20):
         res_test_func = res_test_func or self.response_test_func
         if time() - self.last_proxy_refilled_time > refill_proxy_frequency_sec:
             self.refill_proxy()
