@@ -41,9 +41,10 @@ class _ProxyQueue():
 
 
 class ProxyRequests():
-    def __init__(self, process_index=None, process_max_num=None):
-        self.process_index = process_index
-        self.process_max_num = process_max_num
+    def __init__(self, failed_count_limit):
+        self.failed_count_limit = failed_count_limit
+        # self.process_index = process_index
+        # self.process_max_num = process_max_num
         self.scrap_new_proxy_lock = Lock()
         self.proxyqueue = _ProxyQueue()
         if os.path.isfile("proxy.txt"):
@@ -80,21 +81,21 @@ class ProxyRequests():
     def _add_proxies(self, proxies):
         # added_some = False
         # print(self.process_index, self.process_max_num)
-        if self.process_index and self.process_max_num:
-            for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
-                self.proxyqueue.add_new_proxy(proxy)
-                # if self.process_index == index:
-                #     # added_some = True
-                #     self.proxyqueue.add_new_proxy(proxy)
-            # if not added_some:
-            #     for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
-            #         print(proxy, index)
-            #     print(process_index, self.process_index, self.process_max_num)
-            #     raise
-            # print('added_some', added_some)
-        else:
-            for proxy in proxies:
-                self.proxyqueue.add_new_proxy(proxy)
+        # if self.process_index and self.process_max_num:
+        #     for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
+        #         self.proxyqueue.add_new_proxy(proxy)
+        #         # if self.process_index == index:
+        #         #     # added_some = True
+        #         #     self.proxyqueue.add_new_proxy(proxy)
+        #     # if not added_some:
+        #     #     for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
+        #     #         print(proxy, index)
+        #     #     print(process_index, self.process_index, self.process_max_num)
+        #     #     raise
+        #     # print('added_some', added_some)
+        # else:
+        for proxy in proxies:
+            self.proxyqueue.add_new_proxy(proxy)
 
         #
 
@@ -102,7 +103,7 @@ class ProxyRequests():
         old_proxies = load_from_txt("proxy.txt")
         self.scrap_new_proxy(old_proxies=old_proxies)
 
-    def get(self, url, res_test_func=None, failed_count_limit=20):
+    def get(self, url, res_test_func=None):
         res_test_func = res_test_func or self.response_test_func
         if time() - self.last_proxy_refilled_time > refill_proxy_frequency_sec:
             self.refill_proxy()
@@ -111,7 +112,7 @@ class ProxyRequests():
         failed_count = -1
         while not success:
             failed_count += 1
-            if failed_count > failed_count_limit:
+            if failed_count > self.failed_count_limit:
                 print(f'ProxyRequests.get error:{url}')
                 return url
             score, proxy = self.proxyqueue.get()
@@ -126,6 +127,7 @@ class ProxyRequests():
                 self.proxyqueue.put(proxy, score + 30)
             else:
                 if bool(res_test_func(res)):
+                    res.proxy = proxy
                     score = start_time - time()
                     success = True
                     # print("test success")
