@@ -79,6 +79,7 @@ class ProxyRequests():
 
     def _add_proxies(self, proxies):
         added_some = False
+        print(elf.process_index, self.process_max_num)
         if self.process_index and self.process_max_num:
             for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
                 if self.process_index == index:
