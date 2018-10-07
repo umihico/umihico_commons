@@ -78,19 +78,19 @@ class ProxyRequests():
         self._add_proxies(proxies)
 
     def _add_proxies(self, proxies):
-        added_some = False
-        print(self.process_index, self.process_max_num)
+        # added_some = False
+        # print(self.process_index, self.process_max_num)
         if self.process_index and self.process_max_num:
             for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
                 if self.process_index == index:
-                    added_some = True
+                    # added_some = True
                     self.proxyqueue.add_new_proxy(proxy)
-            if not added_some:
-                for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
-                    print(proxy, index)
-                print(process_index, self.process_index, self.process_max_num)
-                raise
-            print('added_some', added_some)
+            # if not added_some:
+            #     for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num + 1))):
+            #         print(proxy, index)
+            #     print(process_index, self.process_index, self.process_max_num)
+            #     raise
+            # print('added_some', added_some)
         else:
             for proxy in proxies:
                 self.proxyqueue.add_new_proxy(proxy)
