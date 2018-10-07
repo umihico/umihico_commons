@@ -78,11 +78,15 @@ class ProxyRequests():
         self._add_proxies(proxies)
 
     def _add_proxies(self, proxies):
-        # self.process_index self.process_max_num
-        #
-        for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num))):
-            if self.process_index == index:
+        if self.process_index and self.process_max_num:
+            for proxy, index in zip(proxies, itertools.cycle(range(1, self.process_max_num))):
+                if self.process_index == index:
+                    self.proxyqueue.add_new_proxy(proxy)
+        else:
+            for proxy in proxies:
                 self.proxyqueue.add_new_proxy(proxy)
+
+        #
 
     def refill_proxy(self):
         old_proxies = load_from_txt("proxy.txt")
