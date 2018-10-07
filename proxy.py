@@ -90,6 +90,7 @@ class ProxyRequests():
                     print(proxy, index)
                 print(process_index, self.process_index, self.process_max_num)
                 raise
+            print('added_some')
         else:
             for proxy in proxies:
                 self.proxyqueue.add_new_proxy(proxy)
