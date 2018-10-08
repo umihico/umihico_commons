@@ -1,5 +1,5 @@
 import queue
-from time import time
+from time import time, sleep
 from umihico_gist.get_anonymous_proxy.get_anonymous_proxy import get_anonymous_proxy
 from umihico_commons.functools import load_from_txt, save_as_txt, PlannedException
 import random
