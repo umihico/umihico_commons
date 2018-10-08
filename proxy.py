@@ -1,4 +1,3 @@
-from umihico_commons.requests_wrapper import get_with_proxy
 import queue
 from time import time
 from umihico_gist.get_anonymous_proxy.get_anonymous_proxy import get_anonymous_proxy
@@ -14,8 +13,26 @@ import itertools
 from tinydb import TinyDB
 
 
-class TooManyGetFailedException(Exception):
-    pass
+def get_with_proxy(url, proxy):
+    s = Session(Proxy=proxy)
+    res = s.get(url)
+    return res
+
+
+class Session(requests_Session):
+    def __init__(self, Proxy=None):
+        super().__init__()
+        self.headers['User-Agent'] = user_agent
+        if not Proxy is None:
+            self.proxies = {
+                'http': 'http://' + Proxy,
+                'https': 'https://' + Proxy, }
+
+    def get(self, url, connet_timeout=10, read_time=30):
+        # connect timeoutを10秒, read timeoutを30秒に設定
+        res = super().get(url, timeout=(connet_timeout, read_time))
+        # res.raise_for_status()
+        return res
 
 
 class _ProxyQueue():
@@ -119,7 +136,7 @@ class ProxyRequests():
                 print(f'ProxyRequests.get error:{url}')
                 try:
                     self.proxy_errors.insert(
-                        {'url': res.url, 'src': res.text, 'proxy': res.proxy})
+                        {'url': res.url, 'src': res.text, 'proxy': res.proxy, 'status_code', res.status_code})
                 except Exception as e:
                     print(e)
                     raise
@@ -129,6 +146,7 @@ class ProxyRequests():
             start_time = time()
             try:
                 res = get_with_proxy(url, proxy)
+                res.raise_for_status()
                 # print("access success", proxy)
             except (Exception, ) as e:
                 # print(e)
