@@ -117,6 +117,11 @@ class ProxyRequests():
             failed_count += 1
             if failed_count > self.failed_count_limit:
                 print(f'ProxyRequests.get error:{url}')
+                try:
+                    proxy_errors.insert(
+                        {'url': res.url, 'src': res.text, 'proxy': res.proxy})
+                except Exception as e:
+                    print(e)
                 return url
             score, proxy = self.proxyqueue.get()
             # print(score, proxy, url)
@@ -135,9 +140,6 @@ class ProxyRequests():
                     success = True
                     # print("test success")
                 else:
-                    if failed_count == self.failed_count_limit:
-                        proxy_errors.insert(
-                            {'url': res.url, 'src': res.text, 'proxy': res.proxy})
                     # print("test failed")
                     score += 10
                 self.proxyqueue.put(proxy, score)
