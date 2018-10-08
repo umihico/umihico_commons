@@ -11,28 +11,16 @@ emptyresponse = EmptyResponse(text="", json=dict(),)
 refill_proxy_frequency_sec = 60 * 60 * 2
 import itertools
 from tinydb import TinyDB
+import requests
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+headers = {'User-Agent': user_agent, }
 
 
 def get_with_proxy(url, proxy):
-    s = Session(Proxy=proxy)
-    res = s.get(url)
-    return res
-
-
-class Session(requests_Session):
-    def __init__(self, Proxy=None):
-        super().__init__()
-        self.headers['User-Agent'] = user_agent
-        if not Proxy is None:
-            self.proxies = {
-                'http': 'http://' + Proxy,
-                'https': 'https://' + Proxy, }
-
-    def get(self, url, connet_timeout=10, read_time=30):
-        # connect timeoutを10秒, read timeoutを30秒に設定
-        res = super().get(url, timeout=(connet_timeout, read_time))
-        # res.raise_for_status()
-        return res
+    return requests.get('http://example.org', proxies={
+        'http': 'http://' + proxy,
+        'https': 'http://' + proxy,
+    }, headers=headers)
 
 
 class _ProxyQueue():
@@ -131,16 +119,6 @@ class ProxyRequests():
         success = False
         failed_count = -1
         while not success:
-            failed_count += 1
-            if failed_count > self.failed_count_limit:
-                print(f'ProxyRequests.get error:{url}')
-                try:
-                    self.proxy_errors.insert(
-                        {'url': res.url, 'src': res.text, 'proxy': res.proxy, 'status_code', res.status_code})
-                except Exception as e:
-                    print(e)
-                    raise
-                return url
             score, proxy = self.proxyqueue.get()
             # print(score, proxy, url)
             start_time = time()
@@ -157,14 +135,24 @@ class ProxyRequests():
                     res.proxy = proxy
                     score = start_time - time()
                     success = True
+                    return res
                     # print("test success")
                 else:
                     # print("test failed")
                     score += 10
                 self.proxyqueue.put(proxy, score)
 
+            failed_count += 1
+            if failed_count > self.failed_count_limit:
+                print(f'ProxyRequests.get error:{url}')
+                try:
+                    self.proxy_errors.insert(
+                        {'url': url, 'src': res.text, 'proxy': res.proxy, 'status_code', res.status_code})
+                except Exception as e:
+                    print(e)
+                    raise
+                return url
         # print("success!!!", proxy)
-        return res
 
 
 if __name__ == '__main__':
