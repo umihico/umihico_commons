@@ -11,6 +11,7 @@ EmptyResponse = namedtuple('EmptyResponse', ('text', 'json', ))
 emptyresponse = EmptyResponse(text="", json=dict(),)
 refill_proxy_frequency_sec = 60 * 60 * 2
 import itertools
+from tinydb import TinyDB
 
 
 class TooManyGetFailedException(Exception):
@@ -42,6 +43,8 @@ class _ProxyQueue():
 
 class ProxyRequests():
     def __init__(self, failed_count_limit):
+        proxy_errors = TinyDB('proxy_errors.json')
+        proxy_errors.purge()
         self.failed_count_limit = failed_count_limit
         # self.process_index = process_index
         # self.process_max_num = process_max_num
@@ -132,6 +135,9 @@ class ProxyRequests():
                     success = True
                     # print("test success")
                 else:
+                    if failed_count == self.failed_count_limit:
+                        proxy_errors.insert(
+                            {'url': res.url, 'src': res.text, 'proxy': res.proxy})
                     # print("test failed")
                     score += 10
                 self.proxyqueue.put(proxy, score)
