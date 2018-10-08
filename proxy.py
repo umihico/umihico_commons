@@ -124,7 +124,7 @@ class ProxyRequests():
             start_time = time()
             try:
                 res = get_with_proxy(url, proxy)
-                sleep(1)
+                # sleep(1)
                 # res.raise_for_status()
                 # print("access success", proxy)
             except (Exception, ) as e:
