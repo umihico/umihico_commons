@@ -43,8 +43,8 @@ class _ProxyQueue():
 
 class ProxyRequests():
     def __init__(self, failed_count_limit):
-        proxy_errors = TinyDB('proxy_errors.json')
-        proxy_errors.purge()
+        self.proxy_errors = TinyDB('proxy_errors.json')
+        self.proxy_errors.purge()
         self.failed_count_limit = failed_count_limit
         # self.process_index = process_index
         # self.process_max_num = process_max_num
@@ -118,7 +118,7 @@ class ProxyRequests():
             if failed_count > self.failed_count_limit:
                 print(f'ProxyRequests.get error:{url}')
                 try:
-                    proxy_errors.insert(
+                    self.proxy_errors.insert(
                         {'url': res.url, 'src': res.text, 'proxy': res.proxy})
                 except Exception as e:
                     print(e)
