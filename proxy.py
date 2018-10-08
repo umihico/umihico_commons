@@ -17,7 +17,7 @@ headers = {'User-Agent': user_agent, }
 
 
 def get_with_proxy(url, proxy):
-    return requests.get('http://example.org', proxies={
+    return requests.get(url, proxies={
         'http': 'http://' + proxy,
         'https': 'http://' + proxy,
     }, headers=headers)
