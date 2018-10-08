@@ -121,7 +121,8 @@ class ProxyRequests():
                     self.proxy_errors.insert(
                         {'url': res.url, 'src': res.text, 'proxy': res.proxy})
                 except Exception as e:
-                    print(e)
+                    # print(e)
+                    raise
                 return url
             score, proxy = self.proxyqueue.get()
             # print(score, proxy, url)
