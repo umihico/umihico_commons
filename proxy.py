@@ -48,8 +48,8 @@ class _ProxyQueue():
 
 class ProxyRequests():
     def __init__(self, failed_count_limit):
-        # self.proxy_errors = TinyDB('proxy_errors.json')
-        # self.proxy_errors.purge()
+        self.proxy_errors = TinyDB('proxy_errors.json')
+        self.proxy_errors.purge()
         self.failed_count_limit = failed_count_limit
         # self.process_index = process_index
         # self.process_max_num = process_max_num
@@ -125,7 +125,7 @@ class ProxyRequests():
             try:
                 res = get_with_proxy(url, proxy)
                 sleep(1)
-                res.raise_for_status()
+                # res.raise_for_status()
                 # print("access success", proxy)
             except (Exception, ) as e:
                 err_msg = str(e)
@@ -147,14 +147,14 @@ class ProxyRequests():
             failed_count += 1
             if failed_count > self.failed_count_limit:
                 print(f'ProxyRequests.get error:{url}')
-                # try:
-                #     res
-                # except Exception as e:
-                #     self.proxy_errors.insert(
-                #         {'url': url, 'src': err_msg, 'proxy': proxy, })
-                # else:
-                #     self.proxy_errors.insert(
-                #         {'url': url, 'src': res.text, 'proxy': proxy, 'status_code': res.status_code})
+                try:
+                    res
+                except Exception as e:
+                    self.proxy_errors.insert(
+                        {'url': url, 'src': err_msg, 'proxy': proxy, })
+                else:
+                    self.proxy_errors.insert(
+                        {'url': url, 'src': res.text, 'proxy': proxy, 'status_code': res.status_code})
                 return url
         # print("success!!!", proxy)
 
