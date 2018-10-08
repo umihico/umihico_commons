@@ -128,6 +128,7 @@ class ProxyRequests():
                 res.raise_for_status()
                 # print("access success", proxy)
             except (Exception, ) as e:
+                err_msg = str(e)
                 # print(e)
                 # print("access failed", proxy)
                 self.proxyqueue.put(proxy, score + 30)
@@ -148,10 +149,10 @@ class ProxyRequests():
                 print(f'ProxyRequests.get error:{url}')
                 try:
                     self.proxy_errors.insert(
-                        {'url': url, 'src': res.text, 'proxy': res.proxy, 'status_code': res.status_code})
+                        {'url': url, 'src': res.text, 'proxy': proxy, 'status_code': res.status_code})
                 except Exception as e:
-                    print(e)
-                    raise
+                    self.proxy_errors.insert(
+                        {'url': url, 'src': err_msg, 'proxy': proxy, })
                 return url
         # print("success!!!", proxy)
 
