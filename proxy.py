@@ -148,7 +148,7 @@ class ProxyRequests():
                 print(f'ProxyRequests.get error:{url}')
                 try:
                     self.proxy_errors.insert(
-                        {'url': url, 'src': res.text, 'proxy': res.proxy, 'status_code', res.status_code})
+                        {'url': url, 'src': res.text, 'proxy': res.proxy, 'status_code': res.status_code})
                 except Exception as e:
                     print(e)
                     raise
