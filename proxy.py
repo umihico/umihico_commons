@@ -148,11 +148,13 @@ class ProxyRequests():
             if failed_count > self.failed_count_limit:
                 print(f'ProxyRequests.get error:{url}')
                 try:
-                    self.proxy_errors.insert(
-                        {'url': url, 'src': res.text, 'proxy': proxy, 'status_code': res.status_code})
+                    res
                 except Exception as e:
                     self.proxy_errors.insert(
                         {'url': url, 'src': err_msg, 'proxy': proxy, })
+                else:
+                    self.proxy_errors.insert(
+                        {'url': url, 'src': res.text, 'proxy': proxy, 'status_code': res.status_code})
                 return url
         # print("success!!!", proxy)
 
